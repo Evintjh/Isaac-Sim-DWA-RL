@@ -1,4 +1,4 @@
-# Isaac Sim ROS & ROS2 Workspaces
+# Isaac Sim ROS & ROS2 Workspaces testing
 
 This repository contains three workspaces: `noetic_ws` (ROS Noetic), `foxy_ws` (ROS2 Foxy) and `humble_ws` (ROS2 Humble). 
 
