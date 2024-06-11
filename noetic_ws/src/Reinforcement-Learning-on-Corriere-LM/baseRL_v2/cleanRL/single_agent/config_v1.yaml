@@ -1,0 +1,48 @@
+# Env
+env_id: 'Jackal-v0'
+jackal_asset_path : "src/baseRL_v2/cleanRL/single_agent/jackal.usda"
+# General
+evaluation : 0      #True/False
+seed: 1                                   #, type=int, default=1,                    help=seed of the experiment)
+physics_dt : 10.0                    #1.0/x ( if physics_dt == 10.0 -> 1/10.0)
+rendering_dt : 60.0                  #1.0/x 
+eval_physics_dt : 10.0 
+skip_frame : 1                
+grid_spacing : 14
+num_envs: 1                          # Number of duplicate envs
+num_agents: 1
+write_interval: 10000                        # Write interval for tensorboard
+eval_episodes: 20                         # Number of eposides to evaluate
+model_save_interval: 50000
+eval_interval : 50000
+algo: PPO                                     # PPO or SAC
+total_timesteps: 1e6                           #, type=int, default=1000000,                    help=total timesteps of the experiments)
+#total_timesteps: 1e4                           #, type=int, default=1000000,                    help=total timesteps of the experiments)
+collision_distance: 0.45 #493
+goal_radius: 0.45
+final_dist_reward: False
+timeout: 1024
+social_penalty: 0.0 # 0 to off. Default 0.05
+gamma: 0.99                                   #, type=float, default=0.99,                    help=the discount factor gamma)
+num_stacks: 3
+w_max: 1
+v_max: 1
+
+# PPO 
+ppo_print_interval: 1                        # print_interval
+ppo_lr: 3e-4                                  # type=float, default=3e-4,    help="the learning rate of the optimizer")
+num_steps: 1024               # for MA, num_steps >= 256                   # type=int, default=2048,    help="the number of steps to run in each environment per policy rollout")
+anneal_lr: True                                  # type=lambda x: bool(strtobool(x)), default=True, nargs="? # const=True,    help="Toggle learning rate annealing for policy and value networks")
+gae_lambda: 0.95                                  # type=float, default=0.95,    help="the lambda for the general advantage estimation")
+num_minibatches: 32           # for MA, mini_bs <= 256                       # type=int, default=32,    help="the number of mini_batches")
+update_epochs: 5                                  # type=int, default=10,    help="the K epochs to update the policy")
+norm_adv: True                                  # type=lambda x: bool(strtobool(x)), default=True, nargs="? # const=True,    help="Toggles advantages normalization")
+clip_coef: 0.1                                  # type=float, default=0.2,    help="the surrogate clipping coefficient")
+clip_vloss: True                                  # type=lambda x: bool(strtobool(x)), default=True, nargs="? # const=True,    help="Toggles whether or not to use a clipped loss for the value function, as per the paper.")
+ent_coef: 0.01                                  # type=float, default=0.0,    help="coefficient of the entropy")
+vf_coef: 0.5                                  # type=float, default=0.5,    help="coefficient of the value function")
+max_grad_norm: 0.5                                  # type=float, default=0.5,    help="the maximum norm for the gradient clipping")
+target_kl: null                                  # type=float, default=None,    help="the target KL divergence threshold")
+
+
+# minibs = num_steps*num_agents / num_minib <= 256

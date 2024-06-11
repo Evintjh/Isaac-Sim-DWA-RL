@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="772907de-ed93-45e5-ba30-44f0dbf6e977" name="DGX2">
+        <fileTransfer accessType="SFTP" host="conti-sym7981.dynip.ntu.edu.sg" port="22" sshConfigId="ca3450e6-1dc2-4531-8e0e-f1429b8b1ed7" sshConfig="DGX2">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>

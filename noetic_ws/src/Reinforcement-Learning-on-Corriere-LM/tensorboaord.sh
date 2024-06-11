@@ -1,0 +1,1 @@
+/isaac-sim/python.sh -m tensorboard.main --logdir /isaac-sim/Reinforcement-Learning-on-Corriere-LM/baseRL_v2/cleanRL/Jackal-v0

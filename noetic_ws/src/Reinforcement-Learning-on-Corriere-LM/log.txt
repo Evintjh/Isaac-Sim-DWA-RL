@@ -1,0 +1,8 @@
+2024-06-05 06:14
+curl -s -L -o boost_1_76_0.zip.tmp https://boostorg.jfrog.io/artifactory/main/release/1.76.0/source/boost_1_76_0.zip
+2024-06-05 06:15
+curl -s -L -o v2020.3.1.zip.tmp https://github.com/oneapi-src/oneTBB/archive/refs/tags/v2020.3.1.zip
+2024-06-05 06:15
+curl -s -L -o v1.38.8.zip.tmp https://github.com/materialx/MaterialX/archive/v1.38.8.zip
+2024-06-05 06:16
+curl -s -L -o v3_6_0.zip.tmp https://github.com/PixarAnimationStudios/OpenSubdiv/archive/v3_6_0.zip
