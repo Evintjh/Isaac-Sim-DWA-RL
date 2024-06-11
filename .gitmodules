@@ -1,9 +1,1 @@
-[submodule "noetic_ws/src/flir_camera_driver"]
-	path = noetic_ws/src/flir_camera_driver
-	url = https://github.com/ros-drivers/flir_camera_driver.git
-[submodule "noetic_ws/src/jackal"]
-	path = noetic_ws/src/jackal
-	url = https://github.com/jackal/jackal.git
-[submodule "noetic_ws/src/turtlebot3"]
-	path = noetic_ws/src/turtlebot3
-	url = https://github.com/ROBOTIS-GIT/turtlebot3.git
+
