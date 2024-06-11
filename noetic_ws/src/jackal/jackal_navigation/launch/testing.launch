@@ -1,0 +1,10 @@
+<launch>
+    <!-- Load the URDF into the parameter server -->
+    <param name="robot_description" command="$(find xacro)/xacro '$(find jackal_description)/urdf/jackal.urdf'" />
+
+    <!-- Start the robot state publisher -->
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+
+    <!-- Start the joint state publisher -->
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+</launch>

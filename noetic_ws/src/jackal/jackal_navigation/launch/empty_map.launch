@@ -1,0 +1,8 @@
+<launch>
+  <node name="map_server" pkg="map_server" type="map_server" args="$(find jackal_navigation)/maps/empty_map.yaml" />
+
+  <node pkg="tf2_ros" type="static_transform_publisher" name="map_to_odom_static_transform_publisher" args="0 0 0 0 0 0 map odom" />
+
+  <node pkg="tf2_ros" type="static_transform_publisher" name="world_to_map_static_transform_publisher" args="0 0 0 0 0 0 world map" />
+
+</launch>

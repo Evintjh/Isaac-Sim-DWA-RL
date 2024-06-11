@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot name="jackal_1">
+  <joint name="front_left_wheel_joint" type="revolute">
+    <origin xyz="0.131 0.187795 0.0345 " rpy="0. 0. 0."/>
+    <parent link="jackal"/>
+    <child link="front_left_wheel_link"/>
+    <axis xyz="0. 1. 0."/>
+    <limit lower="-0.5" upper="0.5" effort="0." velocity="0."/>
+  </joint>
+  <joint name="front_right_wheel_joint" type="revolute">
+    <origin xyz="0.131 -0.187795 0.0345 " rpy="0. 0. 0."/>
+    <parent link="jackal"/>
+    <child link="front_right_wheel_link"/>
+    <axis xyz="0. 1. 0."/>
+    <limit lower="-0.5" upper="0.5" effort="0." velocity="0."/>
+  </joint>
+  <joint name="rear_left_wheel_joint" type="revolute">
+    <origin xyz="-0.131 0.187795 0.0345 " rpy="0. 0. 0."/>
+    <parent link="jackal"/>
+    <child link="rear_left_wheel_link"/>
+    <axis xyz="0. 1. 0."/>
+    <limit lower="-0.5" upper="0.5" effort="0." velocity="0."/>
+  </joint>
+  <joint name="rear_right_wheel_joint" type="revolute">
+    <origin xyz="-0.131 -0.187795 0.0345 " rpy="0. 0. 0."/>
+    <parent link="jackal"/>
+    <child link="rear_right_wheel_link"/>
+    <axis xyz="0. 1. 0."/>
+    <limit lower="-0.5" upper="0.5" effort="0." velocity="0."/>
+  </joint>
+  <link name="front_left_wheel_link">
+    <inertial>
+      <origin xyz="0. 0. 0." rpy="0. 0. 0."/>
+      <mass value="0.477"/>
+      <inertia ixx="0." ixy="0." ixz="0." iyy="0." iyz="0." izz="0."/>
+    </inertial>
+    <visual>
+      <origin xyz="0. 0. 0." rpy="1.5707964 0. 0. "/>
+      <geometry>
+        <mesh filename="meshes/front_left_wheel_link_visuals.obj" scale="1. 1. 1."/>
+      </geometry>
+    </visual>
+  </link>
+  <link name="front_right_wheel_link">
+    <inertial>
+      <origin xyz="0. 0. 0." rpy="0. 0. 0."/>
+      <mass value="0.477"/>
+      <inertia ixx="0." ixy="0." ixz="0." iyy="0." iyz="0." izz="0."/>
+    </inertial>
+    <visual>
+      <origin xyz="0. 0. 0." rpy="1.5707964 0. 0. "/>
+      <geometry>
+        <mesh filename="meshes/front_right_wheel_link_visuals.obj" scale="1. 1. 1."/>
+      </geometry>
+    </visual>
+  </link>
+  <link name="jackal">
+    <visual>
+      <origin xyz="0. 0. -0.0655" rpy="1.5707964 -0. 1.5707964"/>
+      <geometry>
+        <mesh filename="meshes/visuals_mesh_0.obj" scale="1. 1. 1."/>
+      </geometry>
+    </visual>
+    <visual>
+      <origin xyz="0. 0. 0." rpy="0. 0. 0."/>
+      <geometry>
+        <mesh filename="meshes/visuals_mesh_1.obj" scale="1. 1. 1."/>
+      </geometry>
+    </visual>
+    <visual>
+      <origin xyz="0.222 0. 0.192" rpy="0. 0. 1.5707"/>
+      <geometry>
+        <mesh filename="meshes/visuals_mesh_3.obj" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </visual>
+    <visual>
+      <origin xyz="0.12 0. 0.184" rpy="0. 0. 0."/>
+      <geometry>
+        <mesh filename="meshes/visuals_mesh_5.obj" scale="1. 1. 1."/>
+      </geometry>
+    </visual>
+    <visual>
+      <origin xyz="0.12 0. 0.333" rpy="0. 0. 0."/>
+      <geometry>
+        <mesh filename="meshes/visuals_mesh_6.obj" scale="1. 1. 1."/>
+      </geometry>
+    </visual>
+    <visual>
+      <origin xyz="-0.18 0.126 0.1895" rpy="0. 0. 0."/>
+      <geometry>
+        <cylinder radius="0.026" length="0.016"/>
+      </geometry>
+    </visual>
+    <visual>
+      <origin xyz="0. 0. 0." rpy="0. 0. -3.1415925"/>
+      <geometry>
+        <mesh filename="meshes/visuals_mesh_8.obj" scale="1. 1. 1."/>
+      </geometry>
+    </visual>
+    <visual>
+      <origin xyz="0. 0. 0.092" rpy="0. 0. 0."/>
+      <geometry>
+        <box size="0.42 0.31 0.184"/>
+      </geometry>
+    </visual>
+    <visual>
+      <origin xyz="0.12 0. 0.283" rpy="0. 0. 0."/>
+      <geometry>
+        <box size="0.105 0.1 0.1 "/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0. 0. 0.092" rpy="0. 0. 0."/>
+      <geometry>
+        <box size="0.42 0.31 0.184"/>
+      </geometry>
+    </collision>
+    <collision>
+      <origin xyz="0.12 0. 0.283" rpy="0. 0. 0."/>
+      <geometry>
+        <box size="0.105 0.1 0.1 "/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="rear_left_wheel_link">
+    <inertial>
+      <origin xyz="0. 0. 0." rpy="0. 0. 0."/>
+      <mass value="0.477"/>
+      <inertia ixx="0." ixy="0." ixz="0." iyy="0." iyz="0." izz="0."/>
+    </inertial>
+    <visual>
+      <origin xyz="0. 0. 0." rpy="1.5707964 0. 0. "/>
+      <geometry>
+        <mesh filename="meshes/rear_left_wheel_link_visuals.obj" scale="1. 1. 1."/>
+      </geometry>
+    </visual>
+  </link>
+  <link name="rear_right_wheel_link">
+    <inertial>
+      <origin xyz="0. 0. 0." rpy="0. 0. 0."/>
+      <mass value="0.477"/>
+      <inertia ixx="0." ixy="0." ixz="0." iyy="0." iyz="0." izz="0."/>
+    </inertial>
+    <visual>
+      <origin xyz="0. 0. 0." rpy="1.5707964 0. 0. "/>
+      <geometry>
+        <mesh filename="meshes/rear_right_wheel_link_visuals.obj" scale="1. 1. 1."/>
+      </geometry>
+    </visual>
+  </link>
+</robot>

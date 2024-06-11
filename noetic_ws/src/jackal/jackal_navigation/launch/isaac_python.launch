@@ -1,0 +1,9 @@
+<launch>
+
+  <param name="use_sim_time " value="true"/>
+
+  <!-- <node pkg="jackal_navigation" type="jacker_launcher" respawn="false" name="move_base" /> -->
+
+  <!-- <remap from="odom" to="odometry/filtered" /> -->
+
+</launch>
