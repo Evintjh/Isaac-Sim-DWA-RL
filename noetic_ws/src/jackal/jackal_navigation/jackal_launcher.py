@@ -136,8 +136,13 @@ import numpy as np
 import rospy
 from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Twist
+from geometry_msgs.msg import Pose
+from geometry_msgs.msg import PoseStamped
 from omni.isaac.kit import SimulationApp
 import subprocess
+from isaac_ros_messages.srv import IsaacPose
+from isaac_ros_messages.srv import IsaacPoseRequest
+import math
 
 class JackalEnv:
 
@@ -175,6 +180,8 @@ class JackalEnv:
         self.right_wheel_vel = []
         self.linear_vel = 0
         self.angular_vel = 0
+        self.jackal_vel = 0
+        self.jackal_alpha = 0
 
         self._my_world = World(stage_units_in_meters=1.0)
         self._my_world.scene.add_default_ground_plane()
@@ -182,12 +189,14 @@ class JackalEnv:
         theta = 90 * np.pi / 180
         q_rot = np.array([np.cos(theta / 2), 0, 0, np.sin(theta / 2)])
 
-        jackal_asset_path = "/isaac-sim/IsaacSim-ros_workspaces/noetic_ws/src/jackal/jackal_description/jackal/jackal.usd"
+        # jackal_asset_path = "/isaac-sim/IsaacSim-ros_workspaces/noetic_ws/src/jackal/jackal_description/jackal/jackal.usd"
+        jackal_asset_path = "/isaac-sim/IsaacSim-ros_workspaces/noetic_ws/src/jackal/jackal_description/urdf/jackal_1.usda"
         self.jackal = self._my_world.scene.add(
             WheeledRobot(
                 prim_path="/jackal",
                 name="my_jackal",
-                wheel_dof_names=["front_right_wheel", "rear_right_wheel", "rear_left_wheel", "front_left_wheel"],
+                # wheel_dof_names=["front_right_wheel", "rear_right_wheel", "rear_left_wheel", "front_left_wheel"],
+                wheel_dof_names=["front_right_wheel_joint", "rear_right_wheel_joint", "rear_left_wheel_joint", "front_left_wheel_joint"],
                 create_robot=True,
                 usd_path=jackal_asset_path,
                 position=np.array([-1, 0, 0.07]),
@@ -207,15 +216,20 @@ class JackalEnv:
                 color=np.array([1.0, 1, 1]),
             )
         )
+        
+        # teleporting obstacle
+        self.buffer_time = 3.5
+        self.timer_start = 0
+        self.init_time = True
 
-        self.lidar = self._my_world.scene.add(
-            RotatingLidarPhysX(
-                prim_path="/jackal/front_mount/Lidar",
-                name="Lidar",
-            )
-        )
+        # self.lidar = self._my_world.scene.add(
+        #     RotatingLidarPhysX(
+        #         prim_path="/jackal/front_mount/Lidar",
+        #         name="Lidar",
+        #     )
+        # )
 
-        self.lidar.enable_visualization(high_lod=False, draw_points=True, draw_lines=True)
+        # self.lidar.enable_visualization(high_lod=False, draw_points=True, draw_lines=True)
 
         rospy.init_node('scan_values')
         self.laser_sub = rospy.Subscriber('laser_scan', LaserScan, self.laser_scan_callback)
@@ -226,11 +240,46 @@ class JackalEnv:
         self.linear_vel = msg.linear.x
         self.angular_vel = msg.angular.z
 
-    # def wheel_vel_callback(self, msg):
-    #     self.left_wheel_vel = [msg.data[0],msg.data[1]]
-    #     self.right_wheel_vel = [msg.data[2],msg.data[3]]
-    #     self.right_wheel_vel.extend(left_wheel_vel)
-    #     self.final_joints_vel = right_wheel_vel
+    def odom_callback(self, msg):
+        self.jackal_alpha = msg.pose.pose.angular.z
+        self.jackal_vel = msg.twist.twist.linear.x
+
+    def randomise(self):
+        alpha = 3 * math.pi / 4 + np.random.rand() * (5 * math.pi / 4 - 3 * math.pi / 4) + self.jackal_alpha
+        # print("alpha:  ",alpha.shape)
+        r = np.random.uniform(low=2.5, high=4.0)
+        # print("r:  ",r.shape)
+
+        goal_reset_pos = np.multiply(np.sin(alpha) ,r).reshape((1,-1))
+        goal_reset_pos = np.hstack((goal_reset_pos,np.multiply(np.cos(alpha),r).reshape((1,-1))))
+        goal_reset_pos = np.hstack((goal_reset_pos,np.ones(1).reshape((1,-1))*0.05))     
+
+        # goal_reset_pos = goal_reset_pos + np.array(self.env_pos[reset_idx])
+        # print("env_pos:  ", np.array(self.env_pos).shape)
+        # print("goal_reset_pos: ",goal_reset_pos.shape)
+        # self.goal_prim.set_world_poses(goal_reset_pos,orientations=np.array([1,0,0,0]).reshape((-1,4)))
+
+
+
+        #random obstacles position
+        obstacles_reset_pos = np.random.uniform(low=-1, high=1)
+        obstacles_reset_pos = np.hstack((obstacles_reset_pos, np.random.uniform(low=-1, high=1)))
+        obstacles_reset_pos = np.hstack((obstacles_reset_pos,0.05))
+        # obstacles_reset_pos = obstacles_reset_pos + np.array(self.env_pos[reset_idx])
+        # self.obstacle_prim.set_world_poses(obstacles_reset_pos.reshape((-1,3)),orientations=np.array([1,0,0,0]).reshape((-1,4)))
+
+        return goal_reset_pos, obstacles_reset_pos
+
+
+    def teleport_client(self, msg):
+        rospy.wait_for_service("teleport")
+        try:
+            teleport = rospy.ServiceProxy("teleport", IsaacPose)
+            teleport(msg)
+            return
+        except rospy.ServiceException as e:
+            print("Service call failed: %s" % e)
+
 
     def laser_scan_callback(self, scan):
         self.scan = np.array(scan.ranges)
@@ -240,7 +289,6 @@ class JackalEnv:
             {"graph_path": "/ActionGraph", "evaluator_name": "execution"},
             {
                 self.og.Controller.Keys.CREATE_NODES: [
-                    # ("PublishJointState", "omni.isaac.ros_bridge.ROS1PublishJointState"),
                     ("OnPlaybackTick", "omni.graph.action.OnPlaybackTick"),
                     ("ClockPublisher", "omni.isaac.ros_bridge.ROS1PublishClock"),
                     ("ReadSimTime", "omni.isaac.core_nodes.IsaacReadSimulationTime"),
@@ -250,17 +298,15 @@ class JackalEnv:
                     ("PublishOdometry", "omni.isaac.ros_bridge.ROS1PublishOdometry"),
                     ("PublishOdometryTfXform", "omni.isaac.ros_bridge.ROS1PublishRawTransformTree"),
                     ("tf_baselink_chassis", "omni.isaac.ros_bridge.ROS1PublishTransformTree"),
-                    ("tf_midmount_down", "omni.isaac.ros_bridge.ROS1PublishTransformTree"),
+                    # ("tf_midmount_down", "omni.isaac.ros_bridge.ROS1PublishTransformTree"),
                     ("tf_frontmount_lidar", "omni.isaac.ros_bridge.ROS1PublishTransformTree"),
                     ("tf_chassis_down", "omni.isaac.ros_bridge.ROS1PublishTransformTree"),
                 ],
                 self.og.Controller.Keys.CONNECT: [
-                    # ("ReadSimTime.outputs:simulationTime", "PublishJointState.inputs:timeStamp"),
-                    # ("OnPlaybackTick.outputs:tick", "PublishJointState.inputs:execIn"),
                     ("OnPlaybackTick.outputs:tick", "tf_baselink_chassis.inputs:execIn"),
                     ("ReadSimTime.outputs:simulationTime", "tf_baselink_chassis.inputs:timeStamp"),
-                    ("OnPlaybackTick.outputs:tick", "tf_midmount_down.inputs:execIn"),
-                    ("ReadSimTime.outputs:simulationTime", "tf_midmount_down.inputs:timeStamp"),
+                    # ("OnPlaybackTick.outputs:tick", "tf_midmount_down.inputs:execIn"),
+                    # ("ReadSimTime.outputs:simulationTime", "tf_midmount_down.inputs:timeStamp"),
                     ("OnPlaybackTick.outputs:tick", "tf_frontmount_lidar.inputs:execIn"),
                     ("ReadSimTime.outputs:simulationTime", "tf_frontmount_lidar.inputs:timeStamp"),
                     ("OnPlaybackTick.outputs:tick", "tf_chassis_down.inputs:execIn"),
@@ -292,24 +338,40 @@ class JackalEnv:
                     ("ReadLidarBeams.outputs:rotationRate", "PublishLaserScan.inputs:rotationRate"),
                 ],
                 self.og.Controller.Keys.SET_VALUES: [
-                    # ("PublishJointState.inputs:targetPrim", "/jackal"),
-                    ("ReadLidarBeams.inputs:lidarPrim", "/jackal/front_mount/Lidar"),
+                    # ("ReadLidarBeams.inputs:lidarPrim", "/jackal/front_mount/Lidar"),
+                    # ("PublishLaserScan.inputs:topicName", "/laser_scan"),
+                    # ("PublishLaserScan.inputs:frameId", "Lidar"),
+                    # ("ComputeOdom.inputs:chassisPrim", "/jackal"),
+                    # ("PublishOdometryTfXform.inputs:parentFrameId", "/odom"),
+                    # ("PublishOdometryTfXform.inputs:childFrameId", "/base_link"),
+                    # ("tf_baselink_chassis.inputs:parentPrim", "/jackal/base_link"),
+                    # ("tf_baselink_chassis.inputs:targetPrims", "/jackal/chassis_link"),
+                    # ("tf_midmount_down.inputs:parentPrim", "/jackal/mid_mount"),
+                    # ("tf_midmount_down.inputs:targetPrims", ["/jackal/front_mount","/jackal/rear_mount"]),
+                    # ("tf_frontmount_lidar.inputs:parentPrim", "/jackal/front_mount"),
+                    # ("tf_frontmount_lidar.inputs:targetPrims", "/jackal/front_mount/Lidar"),
+                    # ("tf_chassis_down.inputs:parentPrim", "/jackal/chassis_link"),
+                    # ("tf_chassis_down.inputs:targetPrims", [
+                    #     "/jackal/front_fender_link","/jackal/front_left_wheel_link","/jackal/front_right_wheel_link",
+                    #     "/jackal/rear_left_wheel_link","/jackal/rear_right_wheel_link","/jackal/imu_link","/jackal/mid_mount",
+                    #     "/jackal/navsat_link","/jackal/rear_fender_link"
+                    # ]),
+                    ("ReadLidarBeams.inputs:lidarPrim", "/jackal/base_link/sick_lms1xx_lidar_frame/Lidar"),
                     ("PublishLaserScan.inputs:topicName", "/laser_scan"),
                     ("PublishLaserScan.inputs:frameId", "Lidar"),
                     ("ComputeOdom.inputs:chassisPrim", "/jackal"),
                     ("PublishOdometryTfXform.inputs:parentFrameId", "/odom"),
                     ("PublishOdometryTfXform.inputs:childFrameId", "/base_link"),
                     ("tf_baselink_chassis.inputs:parentPrim", "/jackal/base_link"),
-                    ("tf_baselink_chassis.inputs:targetPrims", "/jackal/chassis_link"),
-                    ("tf_midmount_down.inputs:parentPrim", "/jackal/mid_mount"),
-                    ("tf_midmount_down.inputs:targetPrims", ["/jackal/front_mount","/jackal/rear_mount"]),
-                    ("tf_frontmount_lidar.inputs:parentPrim", "/jackal/front_mount"),
-                    ("tf_frontmount_lidar.inputs:targetPrims", "/jackal/front_mount/Lidar"),
-                    ("tf_chassis_down.inputs:parentPrim", "/jackal/chassis_link"),
+                    ("tf_baselink_chassis.inputs:targetPrims", "/jackal/base_link/sick_lms1xx_lidar_frame"),
+                    # ("tf_midmount_down.inputs:parentPrim", "/jackal/mid_mount"),
+                    # ("tf_midmount_down.inputs:targetPrims", ["/jackal/front_mount","/jackal/rear_mount"]),
+                    ("tf_frontmount_lidar.inputs:parentPrim", "/jackal/base_link/sick_lms1xx_lidar_frame"),
+                    ("tf_frontmount_lidar.inputs:targetPrims", "/jackal/base_link/sick_lms1xx_lidar_frame/Lidar"),
+                    ("tf_chassis_down.inputs:parentPrim", "/jackal/base_link"),
                     ("tf_chassis_down.inputs:targetPrims", [
-                        "/jackal/front_fender_link","/jackal/front_left_wheel_link","/jackal/front_right_wheel_link",
-                        "/jackal/rear_left_wheel_link","/jackal/rear_right_wheel_link","/jackal/imu_link","/jackal/mid_mount",
-                        "/jackal/navsat_link","/jackal/rear_fender_link"
+                        "/jackal/front_left_wheel_link","/jackal/front_right_wheel_link",
+                        "/jackal/rear_left_wheel_link","/jackal/rear_right_wheel_link"
                     ]),
                 ],
             },
@@ -340,6 +402,39 @@ class JackalEnv:
                 self.jackal.apply_wheel_actions(self.jackal_controller.forward(command=[self.linear_vel, self.angular_vel]))
                 print("Linear Velocity: ", self.jackal.get_linear_velocity())
                 print("Angular Velocity: ", self.jackal.get_angular_velocity())
+
+                if abs(self.jackal_vel) <= 0.01:
+                    if self.init_time:
+                        self.timer_start = rospy.get_time()
+                        self.init_time = False
+
+                    # comment out first for simulation
+                    time_waited = rospy.get_time() - self.timer_start
+                    if time_waited >= self.buffer_time:
+                        # goal.x = goal_reset_pos[0][0]
+                        # goal.y = goal_reset_pos[0][1]
+                        # goal.z = goal_reset_pos[0][2]
+                        # compose teleport messages
+                        goal_pos, obstacle_pos = self.randomise()
+                        goal_point = PoseStamped()
+                        cube_pose = Pose()
+                        cube_pose.position.x = obstacle_pos[0][0]
+                        cube_pose.position.y = obstacle_pos[0][1]
+                        cube_pose.position.z = obstacle_pos[0][2]
+                        cube_pose.orientation.w = 1
+                        cube_pose.orientation.x = 0
+                        cube_pose.orientation.y = 0
+                        cube_pose.orientation.z = 0
+                        teleport_msg = IsaacPoseRequest()
+                        teleport_msg.names = ["/obstacles_1"]
+                        teleport_msg.poses = [cube_pose]
+
+
+                        self.teleport_client(teleport_msg)
+                        goal_point.position.x = goal_pos[0][0]
+                        goal_point.position.y = goal_pos[0][1]
+                        goal_point.position.z = goal_pos[0][2]
+
             if self.args.test is True:
                 break
         self.simulation_app.close()

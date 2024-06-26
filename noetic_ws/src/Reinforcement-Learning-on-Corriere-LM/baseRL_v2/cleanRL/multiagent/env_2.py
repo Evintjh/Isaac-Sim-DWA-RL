@@ -13,11 +13,13 @@ import math
 import carb
 import rospy
 from sensor_msgs.msg import LaserScan
+from nav_msgs.msg import Odometry
 import tf
 from collections import deque
 import time
 from env_setup_utils.setup_simulation_app import setup_simulation_app
 from env_setup_utils.env_setup import setup_action_graph
+
 
 
 
@@ -105,6 +107,8 @@ class JackalEnv(gym.Env):
         rospy.init_node("RL_agent")
         for i in range(self.num_agents):
             rospy.Subscriber(f"laser_scan_{i}", LaserScan, self.laser_scan_callback,i)
+            rospy.Subscriber(f"Odom{i}", Odometry, self.odom_callback, i)
+
 
         self.jackal_controller = DifferentialController(name="simple_control", num_agents=self.num_agents,wheel_radius=0.0975, 
                                                         wheel_base=0.37559*1.35)
@@ -125,6 +129,9 @@ class JackalEnv(gym.Env):
         self.num_steps = np.zeros((self.num_agents))  # counting number of iterations for each episode
         self.jackal_prev_linear_velo = 0
         self.jackal_prev_ang_velo = 0
+        self.Quaternions = np.zeros((self.num_agents))         # if self.num_agents  = 3 -> 1 x 3 matrix? --> [0 0 0], hprizontal row across
+        self.pos = np.zeros((self.num_agents))
+        self.robot_odom_ros = np.zeros(2,1)                     # -> creates ([0],[0]) -> 2 by 1 matrix?
         self.stacked_obs = np.zeros((self.num_agents,self.args.num_stacks,364))
         self.rewards = np.zeros((self.num_agents,),dtype=object)
         for i in range(self.num_agents):
@@ -148,6 +155,11 @@ class JackalEnv(gym.Env):
 
         print("done init")
         return
+
+    def odom_callback(self, msg, idx):
+        self.Quaternions[idx] = np.array(msg.pose.pose.angular.w, msg.pose.pose.angular.x, msg.pose.pose.angular.y, msg.pose.pose.angular.z)
+        self.pos[idx] = np.array(msg.pose.pose.linear.x, msg.pose.pose.linear.y, msg.pose.pose.linear.z)
+        self.robot_odom_ros = np.array(self.pos[idx], self.Quaternions[idx])
 
     def laser_scan_callback(self, scan,idx):
         # print(idx)
@@ -364,7 +376,7 @@ class JackalEnv(gym.Env):
 
     def get_local_goal(self):
         # robot_odom = ([caretsian(x,y,z)], [quaternion(w,x,y,z])
-        robot_odom = self.jackal_articulation.get_world_poses() #[2,num_envs]
+        robot_odom = self.robot_odom_ros
         goal_pose, _ = self.goal_prim.get_world_poses()
         local_goal = []
         # goal_pose = goal_pose[0]
