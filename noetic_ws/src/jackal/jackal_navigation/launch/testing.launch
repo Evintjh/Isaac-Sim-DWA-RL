@@ -7,4 +7,6 @@
 
     <!-- Start the joint state publisher -->
     <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+
+    <node name="other_tf_transform" pkg="jackal_navigation" type="tf_broadcaster.py" />
 </launch>

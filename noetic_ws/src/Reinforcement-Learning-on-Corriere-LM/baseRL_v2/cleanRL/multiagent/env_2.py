@@ -6,6 +6,7 @@
 # distribution of this software and related documentation without an express
 # license agreement from NVIDIA CORPORATION is strictly prohibited.
 #
+# import env_setup_utils
 import gym
 from gym import spaces
 import numpy as np
@@ -17,10 +18,21 @@ from nav_msgs.msg import Odometry
 import tf
 from collections import deque
 import time
-from env_setup_utils.setup_simulation_app import setup_simulation_app
-from env_setup_utils.env_setup import setup_action_graph
+import os
+import sys
 
-
+# Add the directory containing 'env_setup_utils' to the system path -> basically cleanRL, then env_setup_utils must have __init__.py
+env_setup_utils_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(env_setup_utils_path)
+print(sys.path)
+# Now you can import 'env_setup_utils'
+try:
+    from env_setup_utils.setup_simulation_app import setup_simulation_app
+    from env_setup_utils.env_setup import setup_action_graph
+    print("Imports successful")
+except ModuleNotFoundError as e:
+    print(f"Error importing module: {e}")
+    sys.exit(1)
 
 
 class JackalEnv(gym.Env):
