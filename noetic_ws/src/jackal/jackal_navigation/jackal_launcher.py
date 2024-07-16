@@ -244,31 +244,31 @@ class JackalEnv:
         self.jackal_alpha = msg.pose.pose.angular.z
         self.jackal_vel = msg.twist.twist.linear.x
 
-    def randomise(self):
-        alpha = 3 * math.pi / 4 + np.random.rand() * (5 * math.pi / 4 - 3 * math.pi / 4) + self.jackal_alpha
-        # print("alpha:  ",alpha.shape)
-        r = np.random.uniform(low=2.5, high=4.0)
-        # print("r:  ",r.shape)
+    # def randomise(self):
+    #     alpha = 3 * math.pi / 4 + np.random.rand() * (5 * math.pi / 4 - 3 * math.pi / 4) + self.jackal_alpha
+    #     # print("alpha:  ",alpha.shape)
+    #     r = np.random.uniform(low=2.5, high=4.0)
+    #     # print("r:  ",r.shape)
 
-        goal_reset_pos = np.multiply(np.sin(alpha) ,r).reshape((1,-1))
-        goal_reset_pos = np.hstack((goal_reset_pos,np.multiply(np.cos(alpha),r).reshape((1,-1))))
-        goal_reset_pos = np.hstack((goal_reset_pos,np.ones(1).reshape((1,-1))*0.05))     
+    #     goal_reset_pos = np.multiply(np.sin(alpha) ,r).reshape((1,-1))
+    #     goal_reset_pos = np.hstack((goal_reset_pos,np.multiply(np.cos(alpha),r).reshape((1,-1))))
+    #     goal_reset_pos = np.hstack((goal_reset_pos,np.ones(1).reshape((1,-1))*0.05))     
 
-        # goal_reset_pos = goal_reset_pos + np.array(self.env_pos[reset_idx])
-        # print("env_pos:  ", np.array(self.env_pos).shape)
-        # print("goal_reset_pos: ",goal_reset_pos.shape)
-        # self.goal_prim.set_world_poses(goal_reset_pos,orientations=np.array([1,0,0,0]).reshape((-1,4)))
+    #     # goal_reset_pos = goal_reset_pos + np.array(self.env_pos[reset_idx])
+    #     # print("env_pos:  ", np.array(self.env_pos).shape)
+    #     # print("goal_reset_pos: ",goal_reset_pos.shape)
+    #     # self.goal_prim.set_world_poses(goal_reset_pos,orientations=np.array([1,0,0,0]).reshape((-1,4)))
 
 
 
-        #random obstacles position
-        obstacles_reset_pos = np.random.uniform(low=-1, high=1)
-        obstacles_reset_pos = np.hstack((obstacles_reset_pos, np.random.uniform(low=-1, high=1)))
-        obstacles_reset_pos = np.hstack((obstacles_reset_pos,0.05))
-        # obstacles_reset_pos = obstacles_reset_pos + np.array(self.env_pos[reset_idx])
-        # self.obstacle_prim.set_world_poses(obstacles_reset_pos.reshape((-1,3)),orientations=np.array([1,0,0,0]).reshape((-1,4)))
+    #     #random obstacles position
+    #     obstacles_reset_pos = np.random.uniform(low=-1, high=1)
+    #     obstacles_reset_pos = np.hstack((obstacles_reset_pos, np.random.uniform(low=-1, high=1)))
+    #     obstacles_reset_pos = np.hstack((obstacles_reset_pos,0.05))
+    #     # obstacles_reset_pos = obstacles_reset_pos + np.array(self.env_pos[reset_idx])
+    #     # self.obstacle_prim.set_world_poses(obstacles_reset_pos.reshape((-1,3)),orientations=np.array([1,0,0,0]).reshape((-1,4)))
 
-        return goal_reset_pos, obstacles_reset_pos
+    #     return goal_reset_pos, obstacles_reset_pos
 
 
     def teleport_client(self, msg):
@@ -385,55 +385,13 @@ class JackalEnv:
                 if self._my_world.current_time_step_index == 0:
                     self._my_world.reset()
                     self.jackal_controller.reset()
-                    # print("control resetted")
-                # if i >= 0 and i < 1000:
-                #     self.jackal.apply_wheel_actions(self.jackal_controller.forward(command=[0.05, np.pi / 12]))
-                #     print("Linear Velocity: ", self.jackal.get_linear_velocity())
-                # elif i >= 1000 and i < 1300:
-                #     self.jackal.apply_wheel_actions(self.jackal_controller.forward(command=[0.0, np.pi / 12]))
-                #     print("Angular Velocity: ", self.jackal.get_angular_velocity())
-                # elif i >= 1300 and i < 2000:
-                #     self.jackal.apply_wheel_actions(self.jackal_controller.forward(command=[0.05, 0]))
-                # elif i == 2000:
-                #     i = 0
-                # i += 1
-                # if i >= 0 and i < 3000:
+
                 print(self.linear_vel, self.angular_vel)
                 self.jackal.apply_wheel_actions(self.jackal_controller.forward(command=[self.linear_vel, self.angular_vel]))
                 print("Linear Velocity: ", self.jackal.get_linear_velocity())
                 print("Angular Velocity: ", self.jackal.get_angular_velocity())
 
-                if abs(self.jackal_vel) <= 0.01:
-                    if self.init_time:
-                        self.timer_start = rospy.get_time()
-                        self.init_time = False
 
-                    # comment out first for simulation
-                    time_waited = rospy.get_time() - self.timer_start
-                    if time_waited >= self.buffer_time:
-                        # goal.x = goal_reset_pos[0][0]
-                        # goal.y = goal_reset_pos[0][1]
-                        # goal.z = goal_reset_pos[0][2]
-                        # compose teleport messages
-                        goal_pos, obstacle_pos = self.randomise()
-                        goal_point = PoseStamped()
-                        cube_pose = Pose()
-                        cube_pose.position.x = obstacle_pos[0][0]
-                        cube_pose.position.y = obstacle_pos[0][1]
-                        cube_pose.position.z = obstacle_pos[0][2]
-                        cube_pose.orientation.w = 1
-                        cube_pose.orientation.x = 0
-                        cube_pose.orientation.y = 0
-                        cube_pose.orientation.z = 0
-                        teleport_msg = IsaacPoseRequest()
-                        teleport_msg.names = ["/obstacles_1"]
-                        teleport_msg.poses = [cube_pose]
-
-
-                        self.teleport_client(teleport_msg)
-                        goal_point.position.x = goal_pos[0][0]
-                        goal_point.position.y = goal_pos[0][1]
-                        goal_point.position.z = goal_pos[0][2]
 
             if self.args.test is True:
                 break
